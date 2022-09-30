@@ -1,0 +1,34 @@
+{
+	admin off
+	email email@example.org 
+}
+
+(php) {
+	php_fastcgi php:9000
+}
+
+(grafana) {
+	redir /grafana /grafana/
+	handle_path /grafana/* {
+		reverse_proxy grafana:3000
+	}
+}
+
+(phpmyadmin) {
+	redir /phpmyadmin /phpmyadmin/
+	handle_path /phpmyadmin/* {
+		reverse_proxy phpmyadmin:80
+	}
+}
+
+:2019 {
+	metrics
+}
+
+:80 {
+	root * /var/www/html
+
+	import grafana
+	import phpmyadmin
+	import php
+}

@@ -1,0 +1,73 @@
+version: '3.5'
+
+networks:
+  frontend:
+  backend:
+
+services:
+  caddy:
+    image: caddy:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ${WWW_PATH:?Define WWW_PATH}:/www
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - frontend
+      - backend
+  php:
+    build: ./php
+    restart: unless-stopped
+    user: "1001:1003"
+    volumes:
+      - ${WWW_PATH:?Define WWW_PATH}:/www 
+    networks:
+      - backend
+  phpmyadmin:
+    image: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: "172.17.0.1"
+      PMA_ABSOLUTE_URI: "/phpmyadmin"
+    networks:
+      - frontend
+  grafana:
+    image: grafana/grafana-oss
+    restart: unless-stopped
+    environment:
+      GF_SERVER_ROOT_URL: "/grafana" 
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+    volumes:
+      - ./grafana:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    networks:
+      - frontend
+      - backend
+  prometheus:
+    image: prom/prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - backend
+  node-exporter:
+    image: quay.io/prometheus/node-exporter
+    restart: unless-stopped
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro,rslave"
+    networks:
+      - backend
+
+volumes:
+  caddy_data:
+    external: true
+  caddy_config:
+    external: true
+  grafana_data:
+    external: true
