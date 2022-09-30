@@ -22,7 +22,7 @@ services:
   php:
     build: ./php
     restart: unless-stopped
-    user: "1001:1003"
+    user: ${PHP_USER_AND_GROUPID:?Define PHP_USER_AND_GROUPID} 
     volumes:
       - ${WWW_PATH:?Define WWW_PATH}:/www 
     networks:
