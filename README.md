@@ -1,4 +1,4 @@
-# edward-deploy
+# servercompose 
 Docker Compose for my Server
 ## Whats inside?
 - Caddy (Webserver)
@@ -8,9 +8,11 @@ Docker Compose for my Server
 - Prometheus (collecting metrics from Caddy,node-exporter,Grafana and himself)
 - node-exporter (monitoring the server)
 - two network bridges frontend and backend
+- MariaDB
 ### Exposed Ports
 - 443
 - 80
+- 3306
 ## Usage
 - Clone the repository
 - Edit the example.* files or add your own
