@@ -63,6 +63,18 @@ services:
       - "/:/host:ro,rslave"
     networks:
       - backend
+  mariadb:
+    image: mariadb
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_PASSWORD:?Define MARIADB_PASSWORD}
+    volumes:
+      - ${MARIADB_PATH:?Define MARIADB_PATH}:/var/lib/mysql:rw
+    networks:
+      - frontend
+      - backend
 
 volumes:
   caddy_data:
