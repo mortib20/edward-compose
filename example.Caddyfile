@@ -1,17 +1,10 @@
 {
 	admin off
-	email email@example.org 
+	email admin@something.com 
 }
 
 (php) {
 	php_fastcgi php:9000
-}
-
-(grafana) {
-	redir /grafana /grafana/
-	handle_path /grafana/* {
-		reverse_proxy grafana:3000
-	}
 }
 
 (phpmyadmin) {
@@ -21,14 +14,10 @@
 	}
 }
 
-:2019 {
-	metrics
-}
-
 :80 {
-	root * /var/www/html
+	root * /www
+	file_server *
 
-	import grafana
 	import phpmyadmin
 	import php
 }

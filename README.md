@@ -1,14 +1,11 @@
 # servercompose 
-Docker Compose for my Server
+Docker compose for my server
 ## Whats inside?
 - Caddy (Webserver)
 - PHP 8.0 (Hypertext Preprocessor)
+- MariaDB (Database)
 - phpMyAdmin (Database managment)
-- Grafana (configured for Prometheus)
-- Prometheus (collecting metrics from Caddy,node-exporter,Grafana and himself)
-- node-exporter (monitoring the server)
 - two network bridges frontend and backend
-- MariaDB
 ### Exposed Ports
 - 443
 - 80
