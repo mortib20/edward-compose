@@ -66,12 +66,12 @@ services:
     restart: unless-stopped
     ports:
       - 3306:3306
+    volumes:
+      - ${DB_PATH:?Define DB_PATH}:/var/lib/mysql:rw
+      - ${TZ}:/etc/localtime
     environment:
       MARIADB_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:?Define DB_ROOT_PASSWORD}"
       MARIADB_USER: "${DB_USER:?Define DB_USER}"
       MARIADB_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD}"
-    volumes:
-      - ${DB_PATH:?Define DB_PATH}:/var/lib/mysql:rw
-      - ${TZ}:/etc/localtime
     networks:
       - net 
