@@ -1,55 +1,77 @@
 version: '3.5'
 
 networks:
-  frontend:
-  backend:
+  net:
 
 services:
   caddy:
-    image: caddy:alpine
+    container_name: caddy
+    image: caddy:latest
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - 80:80
+      - 443:443
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ${WWW_PATH:?Define WWW_PATH}:/www
-      - caddy_data:/data
-      - caddy_config:/config
+      - ${CADDY_WWW_PATH:?Define CADDY_WWW_PATH}:/www
+      - ${CADDY_DATA_PATH:?Define CADDY_DATA_PATH}:/data
+      - ${CADDY_CONFIG_PATH:?Define CADDY_CONFIG_PATH}:/config
+      - ${TZ}:/etc/localtime
     networks:
-      - frontend
-      - backend
+      - net
+
+  roundcube:
+    container_name: roundcube
+    image: roundcube/roundcubemail:latest
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ${RNDC_PATH:?Define RNDC_PATH}:/var/roundcube/db
+      - ${TZ}:/etc/localtime
+    environment:
+      ROUNDCUBEMAIL_DB_TYPE: "${RNDC_DB_TYPE:?Define RNDC_DB_TYPE}"
+      ROUNDCUBEMAIL_DEFAULT_HOST: "${RNDC_IMAP:?Define RNDC_IMAP}"
+      ROUNDCUBEMAIL_DEFAULT_PORT: "${RNDC_IMAP_PORT:?Define RNDC_IMAP_PORT}"
+      ROUNDCUBEMAIL_SMTP_SERVER: "${RNDC_SMTP:?Define RNDC_SMTP}"
+      ROUNDCUBEMAIL_SMTP_PORT: "${RNDC_SMTP_PORT:?Define RNDC_SMTP_PORT}"
+    networks:
+      - net
+
   php:
+    container_name: php
     build: ./php
     restart: unless-stopped
-#    user: ${PHP_USER_AND_GROUPID:?Define PHP_USER_AND_GROUPID} 
     volumes:
-      - ${WWW_PATH:?Define WWW_PATH}:/www 
+      - ${PHP_WWW_PATH:?Define PHP_WWW_PATH}:/www
+      - ${TZ}:/etc/localtime
     networks:
-      - backend
+      - net
+
   phpmyadmin:
+    container_name: phpmyadmin
     image: phpmyadmin
     restart: unless-stopped
+    volumes:
+      - ${TZ}:/etc/localtime
     environment:
-      PMA_HOST: "172.17.0.1"
+      PMA_HOST: "mariadb"
       PMA_ABSOLUTE_URI: "/phpmyadmin"
     networks:
-      - frontend
+      - net
+
   mariadb:
+    container_name: mariadb
     image: mariadb
     restart: unless-stopped
     ports:
-      - "3306:3306"
+      - 3306:3306
     environment:
-      MARIADB_ROOT_PASSWORD: ${MARIADB_PASSWORD:?Define MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:?Define DB_ROOT_PASSWORD}"
+      MARIADB_USER: "${DB_USER:?Define DB_USER}"
+      MARIADB_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD}"
     volumes:
-      - ${MARIADB_PATH:?Define MARIADB_PATH}:/var/lib/mysql:rw
+      - ${DB_PATH:?Define DB_PATH}:/var/lib/mysql:rw
+      - ${TZ}:/etc/localtime
     networks:
-      - frontend
-      - backend
-
-volumes:
-  caddy_data:
-    external: true
-  caddy_config:
-    external: true
+      - net 

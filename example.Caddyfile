@@ -1,6 +1,6 @@
 {
 	admin off
-	email admin@something.com 
+	email mail@address.com 
 }
 
 (php) {
@@ -15,8 +15,8 @@
 }
 
 :80 {
-	root * /www
-	file_server *
+	root * /www/
+	file_server * browse
 
 	import phpmyadmin
 	import php
