@@ -1,0 +1,33 @@
+{
+	email yourmail@ example.org
+}
+
+# Imports
+
+(php) {
+	php_fastcgi php:9000
+}
+
+(grafana) {
+	redir /grafana /grafana/
+	handle_path /grafana/* {
+		reverse_proxy grafana:3000
+	}
+}
+
+(phpmyadmin) {
+	redir /phpmyadmin /phpmyadmin/
+	handle_path /phpmyadmin/* {
+		reverse_proxy phpmyadmin:80
+	}
+}
+
+# Sites
+
+localhost:80 {
+	root * /srv
+
+	import grafana
+	import phpmyadmin
+	import php
+}

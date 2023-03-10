@@ -2,10 +2,12 @@
 Docker compose for my server
 ## Whats inside?
 - Caddy (Webserver)
-- PHP 8.0 (Hypertext Preprocessor)
+- Latest PHP (Hypertext Preprocessor)
 - MariaDB (Database)
 - phpMyAdmin (Database managment)
 - Roundcube (Mail)
+- Grafana (Metric Visualizer)
+- Prometheus (Metric Collector)
 ### Exposed Ports
 - 443
 - 80

@@ -1,65 +1,57 @@
-version: '3.5'
-
-networks:
-  net:
+volumes:
+  caddy_data:
+    external: true
+  caddy_config:
+    external: true
+  roundcube_storage:
+    external: true
+  grafana_storage:
+    external: true
+  prometheus_storage:
+    external: true
 
 services:
+  # Caddy
   caddy:
     container_name: caddy
-    image: caddy:latest
+    image: caddy
     restart: unless-stopped
     ports:
       - 80:80
       - 443:443
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - ${CADDY_WWW_PATH:?Define CADDY_WWW_PATH}:/www
-      - ${CADDY_DATA_PATH:?Define CADDY_DATA_PATH}:/data
-      - ${CADDY_CONFIG_PATH:?Define CADDY_CONFIG_PATH}:/config
       - ${TZ}:/etc/localtime
-    networks:
-      - net
+      - ./config/Caddyfile:/etc/caddy/Caddyfile
+      - ${WWW_PATH}:/srv
+      - caddy_data:/data
+      - caddy_config:/config
 
-  roundcube:
-    container_name: roundcube
-    image: roundcube/roundcubemail:latest
-    restart: unless-stopped
-    ports:
-      - 8000:80
-    volumes:
-      - ${RNDC_PATH:?Define RNDC_PATH}:/var/roundcube/db
-      - ${TZ}:/etc/localtime
-    environment:
-      ROUNDCUBEMAIL_DB_TYPE: "${RNDC_DB_TYPE:?Define RNDC_DB_TYPE}"
-      ROUNDCUBEMAIL_DEFAULT_HOST: "${RNDC_IMAP:?Define RNDC_IMAP}"
-      ROUNDCUBEMAIL_DEFAULT_PORT: "${RNDC_IMAP_PORT:?Define RNDC_IMAP_PORT}"
-      ROUNDCUBEMAIL_SMTP_SERVER: "${RNDC_SMTP:?Define RNDC_SMTP}"
-      ROUNDCUBEMAIL_SMTP_PORT: "${RNDC_SMTP_PORT:?Define RNDC_SMTP_PORT}"
-    networks:
-      - net
-
+  # PHP Preprocessor
   php:
     container_name: php
-    build: ./php
+    build: ./build/php/
     restart: unless-stopped
     volumes:
-      - ${PHP_WWW_PATH:?Define PHP_WWW_PATH}:/www
       - ${TZ}:/etc/localtime
-    networks:
-      - net
+      - ${WWW_PATH}:/srv
 
-  phpmyadmin:
-    container_name: phpmyadmin
-    image: phpmyadmin
+  # Roundcube
+  roundcube:
+    container_name: roundcube
+    image: roundcube/roundcubemail
     restart: unless-stopped
     volumes:
       - ${TZ}:/etc/localtime
+      - roundcube_storage:/var/roundcube/db
     environment:
-      PMA_HOST: "mariadb"
-      PMA_ABSOLUTE_URI: "/phpmyadmin"
-    networks:
-      - net
+      - ROUNDCUBEMAIL_DB_TYPE=sqlite
+      - ROUNDCUBEMAIL_DEFAULT_HOST=${RNDC_IMAP}
+      - ROUNDCUBEMAIL_DEFAULT_PORT=${RNDC_IMAP_PORT}
+      - ROUNDCUBEMAIL_SMTP_SERVER=${RNDC_SMTP}
+      - ROUNDCUBEMAIL_SMTP_PORT=${RNDC_SMTP_PORT}
+      - ROUNDCUBEMAIL_ASPELL_DICTS=${RNDC_DICTS}
 
+  # MariaDB
   mariadb:
     container_name: mariadb
     image: mariadb
@@ -67,11 +59,47 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - ${DB_PATH:?Define DB_PATH}:/var/lib/mysql:rw
+      - ${TZ}:/etc/localtime
+      - ${DB_PATH}:/var/lib/mysql
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_PASSWORD}
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+      - MARIADB_DATABASE=${DB_DATABASE}
+
+  # phpmyadmin
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: phpmyadmin
+    restart: unless-stopped
+    volumes:
       - ${TZ}:/etc/localtime
     environment:
-      MARIADB_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:?Define DB_ROOT_PASSWORD}"
-      MARIADB_USER: "${DB_USER:?Define DB_USER}"
-      MARIADB_PASSWORD: "${DB_PASSWORD:?Define DB_PASSWORD}"
-    networks:
-      - net 
+      - PMA_HOST=mariadb
+      - PMA_ABSOLUTE_URI=${PMA_URI}
+
+  # Grafana
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-oss
+    restart: unless-stopped
+    volumes:
+      - ${TZ}:/etc/localtime
+      - grafana_storage:/var/lib/grafana
+      - ./config/grafana/custom.ini:/etc/grafana/grafana.ini:ro
+    environment:
+      - GF_SERVER_ROOT_URL=/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_FEATURE_TOGGLES_PUBLICDASHBOARDS=true
+
+  # Prometheus
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    restart: unless-stopped
+    volumes:
+      - ${TZ}:/etc/localtime
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_storage:/prometheus
