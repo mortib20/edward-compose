@@ -12,7 +12,6 @@ Docker compose for my server
 - 443
 - 80
 - 3306
-- 8000
 ## Usage
 - Clone the repository
 - Edit the example.* files or add your own
